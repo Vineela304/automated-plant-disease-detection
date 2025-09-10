@@ -2,15 +2,54 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 
+# Load model once and cache it
+@st.cache_resource
+def load_model():
+    try:
+        # Try loading models in order of preference (working models first)
+        model_files = [
+            "trained_plant_disease_model.h5",  # This one works!
+            "trained_plant_disease_model_partial_recovery.h5",
+            "trained_plant_disease_model_fresh.h5",
+            "trained_plant_disease_model_fresh.keras", 
+            "trained_plant_disease_model.keras"
+        ]
+        
+        for model_file in model_files:
+            try:
+                model = tf.keras.models.load_model(model_file)
+                st.success(f"✅ Successfully loaded trained model: {model_file}")
+                st.info(f"📊 Model info: Input {model.input_shape}, Output {model.output_shape}")
+                return model
+            except Exception as e:
+                st.warning(f"⚠️ Failed to load {model_file}: {str(e)[:50]}...")
+                continue
+        
+        # If no model loads successfully
+        st.error("❌ Could not load any model file!")
+        st.error("All model files appear to be corrupted or incompatible.")
+        st.info("💡 Please retrain the model using the training notebook.")
+        return None
+        
+    except Exception as e:
+        st.error(f"Unexpected error: {str(e)}")
+        return None
 
 #Tensorflow Model Prediction
 def model_prediction(test_image):
-    model = tf.keras.models.load_model("trained_plant_disease_model.keras")
-    image = tf.keras.preprocessing.image.load_img(test_image,target_size=(128,128))
-    input_arr = tf.keras.preprocessing.image.img_to_array(image)
-    input_arr = np.array([input_arr]) #convert single image to batch
-    predictions = model.predict(input_arr)
-    return np.argmax(predictions) #return index of max element
+    model = load_model()
+    if model is None:
+        return None
+    
+    try:
+        image = tf.keras.preprocessing.image.load_img(test_image,target_size=(128,128))
+        input_arr = tf.keras.preprocessing.image.img_to_array(image)
+        input_arr = np.array([input_arr]) #convert single image to batch
+        predictions = model.predict(input_arr)
+        return np.argmax(predictions) #return index of max element
+    except Exception as e:
+        st.error(f"Error during prediction: {str(e)}")
+        return None
 
 #Sidebar
 st.sidebar.title("Dashboard")
@@ -66,22 +105,29 @@ elif(app_mode=="Disease Recognition"):
         st.image(test_image,width=4,use_column_width=True)
     #Predict button
     if(st.button("Predict")):
-        st.snow()
-        st.write("Our Prediction")
-        result_index = model_prediction(test_image)
-        #Reading Labels
-        class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-                    'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 
-                    'Cherry_(including_sour)___healthy', 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 
-                    'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy', 
-                    'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 
-                    'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
-                    'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 
-                    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 
-                    'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 
-                    'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot', 
-                    'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 
-                    'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 
-                    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
-                      'Tomato___healthy']
-        st.success("Model is Predicting it's a {}".format(class_name[result_index]))
+        if test_image is None:
+            st.error("Please upload an image first!")
+        else:
+            st.snow()
+            st.write("Our Prediction")
+            result_index = model_prediction(test_image)
+            
+            if result_index is not None:
+                #Reading Labels
+                class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
+                            'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 
+                            'Cherry_(including_sour)___healthy', 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 
+                            'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy', 
+                            'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 
+                            'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
+                            'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 
+                            'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 
+                            'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 
+                            'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot', 
+                            'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 
+                            'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 
+                            'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
+                              'Tomato___healthy']
+                st.success("Model is Predicting it's a {}".format(class_name[result_index]))
+            else:
+                st.error("Failed to make prediction. Please try again with a different image.")

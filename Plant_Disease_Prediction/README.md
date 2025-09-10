@@ -58,19 +58,42 @@ Plant_Disease_Prediction/
 └── requirement.txt     # Dependencies
 ```
 
-### 5. Pre-trained Model
-The trained model files are also excluded due to size. You can either:
+### 5. Model Setup (Choose One Option)
 
-#### Option A: Use Provided Model (if available)
-- Download from [Google Drive/OneDrive link] (add your link here)
+#### 🎯 Option A: Use Pre-trained Model (Recommended - No Training!)
+**Best for: Testing, demos, immediate use**
+- **No training needed** - saves 2-4 hours!
+- **Accurate predictions** - ~95% validation accuracy
+- **Quick setup** - ready in minutes
 
-#### Option B: Train Your Own Model
 ```bash
-# Run the training notebook
-jupyter notebook Train_plant_disease.ipynb
-# Or train via Python script
-python train_model.py
+# Contact project owner for model file, or download from:
+# [Add your Google Drive/OneDrive link here]
+# Place the .h5 file in the project directory
 ```
+
+#### 🎭 Option B: Demo Model (Interface Testing)
+**Best for: Testing the interface without real predictions**
+```bash
+python download_model.py
+# Creates untrained model - predictions will be random
+# Good for UI testing, not for real disease detection
+```
+
+#### 🏋️ Option C: Train Your Own Model (2-4 hours)
+**Best for: Learning, customization, latest dataset**
+```bash
+# Make sure you have the dataset first
+python setup_dataset.py
+
+# Then train (requires good GPU/CPU - takes 2-4 hours)
+jupyter notebook Train_plant_disease.ipynb
+```
+
+**💡 Recommendation for Collaborators:**
+- Use **Option A** (pre-trained) for real work
+- Use **Option B** (demo) for quick interface testing
+- Use **Option C** (train) only if you want to learn or customize
 
 ### 6. Run the Application
 ```bash

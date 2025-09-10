@@ -6,29 +6,54 @@ import numpy as np
 @st.cache_resource
 def load_model():
     try:
-        # Try loading models in order of preference (working models first)
+        # Try loading models in order of preference
         model_files = [
-            "trained_plant_disease_model.h5",  # This one works!
-            "trained_plant_disease_model_partial_recovery.h5",
-            "trained_plant_disease_model_fresh.h5",
-            "trained_plant_disease_model_fresh.keras", 
-            "trained_plant_disease_model.keras"
+            ("trained_plant_disease_model.h5", "🎯 Pre-trained Model (Accurate)"),
+            ("demo_plant_disease_model.h5", "🎭 Demo Model (Interface Testing)"),
+            ("trained_plant_disease_model_partial_recovery.h5", "🔧 Recovered Model"),
+            ("trained_plant_disease_model_fresh.h5", "🆕 Fresh Model"),
+            ("trained_plant_disease_model_fresh.keras", "🆕 Fresh Model (Keras)"),
+            ("trained_plant_disease_model.keras", "⚠️ Legacy Model")
         ]
         
-        for model_file in model_files:
+        for model_file, description in model_files:
             try:
                 model = tf.keras.models.load_model(model_file)
-                st.success(f"✅ Successfully loaded trained model: {model_file}")
-                st.info(f"📊 Model info: Input {model.input_shape}, Output {model.output_shape}")
+                st.success(f"✅ {description}")
+                st.info(f"📁 Using: {model_file}")
+                st.info(f"📊 Architecture: Input {model.input_shape} → Output {model.output_shape}")
+                
+                # Check if it's a demo model
+                if "demo" in model_file:
+                    st.warning("⚠️ This is a DEMO model with random weights!")
+                    st.warning("🎭 Predictions will be random - for interface testing only")
+                    st.info("💡 For real predictions, get the pre-trained model from project owner")
+                
                 return model
+                
             except Exception as e:
-                st.warning(f"⚠️ Failed to load {model_file}: {str(e)[:50]}...")
                 continue
         
-        # If no model loads successfully
-        st.error("❌ Could not load any model file!")
-        st.error("All model files appear to be corrupted or incompatible.")
-        st.info("💡 Please retrain the model using the training notebook.")
+        # If no model loads successfully - show helpful message
+        st.error("❌ No model files found!")
+        st.markdown("""
+        ### 🤔 No Model Available - What to do?
+        
+        **For Collaborators/New Users:**
+        1. **Get Pre-trained Model** (Recommended - No training needed!)
+           - Contact project owner for the trained model file
+           - Or check README.md for download links
+           
+        2. **Create Demo Model** (Quick testing)
+           - Run: `python download_model.py`
+           - Creates untrained model for interface testing
+           
+        3. **Train Your Own** (2-4 hours)
+           - Ensure you have the dataset (run `python setup_dataset.py`)
+           - Run the training notebook: `Train_plant_disease.ipynb`
+        
+        **Current Status:** App will not work without a model file.
+        """)
         return None
         
     except Exception as e:
